@@ -2,28 +2,35 @@
 
 namespace Spatie\Analytics;
 
+use Illuminate\Support\ServiceProvider;
 use Spatie\Analytics\Exceptions\InvalidConfiguration;
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
 
-class AnalyticsServiceProvider extends PackageServiceProvider
+class AnalyticsServiceProvider extends ServiceProvider
 {
-    public function configurePackage(Package $package): void
+    /**
+     * Bootstrap the application events.
+     */
+    public function boot()
     {
-        $package
-            ->name('laravel-analytics')
-            ->hasConfigFile();
+        $this->publishes([
+            __DIR__.'/../config/analytics.php' => config_path('analytics.php'),
+        ]);
     }
 
-    public function bootingPackage()
+    /**
+     * Register the service provider.
+     */
+    public function register()
     {
+        $this->mergeConfigFrom(__DIR__.'/../config/analytics.php', 'analytics');
+
         $this->app->bind(AnalyticsClient::class, function () {
             $analyticsConfig = config('analytics');
 
             return AnalyticsClientFactory::createForConfig($analyticsConfig);
         });
 
-        $this->app->singleton('laravel-analytics', function () {
+        $this->app->bind(Analytics::class, function () {
             $analyticsConfig = config('analytics');
 
             $this->guardAgainstInvalidConfiguration($analyticsConfig);
@@ -32,9 +39,11 @@ class AnalyticsServiceProvider extends PackageServiceProvider
 
             return new Analytics($client, $analyticsConfig['property_id']);
         });
+
+        $this->app->alias(Analytics::class, 'laravel-analytics');
     }
 
-    protected function guardAgainstInvalidConfiguration(array $analyticsConfig = null): void
+    protected function guardAgainstInvalidConfiguration(array $analyticsConfig = null)
     {
         if (empty($analyticsConfig['property_id'])) {
             throw InvalidConfiguration::propertyIdNotSpecified();

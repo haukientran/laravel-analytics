@@ -9,11 +9,15 @@ use Illuminate\Support\Traits\Macroable;
 class Analytics
 {
     use Macroable;
+    protected AnalyticsClient $client;
+    protected string $propertyId;
 
     public function __construct(
-        protected AnalyticsClient $client,
-        protected string $propertyId,
+        AnalyticsClient $client,
+        string $propertyId
     ) {
+        $this->client = $client;
+        $this->propertyId = $propertyId;
     }
 
     public function setPropertyId(string $propertyId): self
@@ -38,11 +42,12 @@ class Analytics
     public function fetchVisitorsAndPageViews(Period $period, int $maxResults = 10, int $offset = 0): Collection
     {
         return $this->get(
-            period: $period,
-            metrics: ['activeUsers', 'screenPageViews'],
-            dimensions: ['pageTitle'],
-            maxResults: $maxResults,
-            offset: $offset,
+            $period,
+            ['activeUsers', 'screenPageViews'],
+            ['pageTitle'],
+            $maxResults,
+            [],
+            $offset
         );
     }
 
@@ -57,14 +62,14 @@ class Analytics
     public function fetchVisitorsAndPageViewsByDate(Period $period, int $maxResults = 10, $offset = 0): Collection
     {
         return $this->get(
-            period: $period,
-            metrics: ['activeUsers', 'screenPageViews'],
-            dimensions: ['pageTitle', 'date'],
-            maxResults: $maxResults,
-            orderBy: [
+            $period,
+            ['activeUsers', 'screenPageViews'],
+            ['pageTitle', 'date'],
+            $maxResults,
+            [
                 OrderBy::dimension('date', true),
             ],
-            offset: $offset,
+            $offset,
         );
     }
 
@@ -78,14 +83,14 @@ class Analytics
     public function fetchTotalVisitorsAndPageViews(Period $period, int $maxResults = 20, int $offset = 0): Collection
     {
         return $this->get(
-            period: $period,
-            metrics: ['activeUsers', 'screenPageViews'],
-            dimensions: ['date'],
-            maxResults: $maxResults,
-            orderBy: [
+            $period,
+            ['activeUsers', 'screenPageViews'],
+            ['date'],
+            $maxResults,
+            [
                 OrderBy::dimension('date', true),
             ],
-            offset: $offset,
+            $offset,
         );
     }
 
@@ -99,14 +104,14 @@ class Analytics
     public function fetchMostVisitedPages(Period $period, int $maxResults = 20, int $offset = 0): Collection
     {
         return $this->get(
-            period: $period,
-            metrics: ['screenPageViews'],
-            dimensions: ['pageTitle', 'fullPageUrl'],
-            maxResults: $maxResults,
-            orderBy: [
+            $period,
+            ['screenPageViews'],
+            ['pageTitle', 'fullPageUrl'],
+            $maxResults,
+            [
                 OrderBy::metric('screenPageViews', true),
             ],
-            offset: $offset,
+            $offset,
         );
     }
 
@@ -119,14 +124,14 @@ class Analytics
     public function fetchTopReferrers(Period $period, int $maxResults = 20, int $offset = 0): Collection
     {
         return $this->get(
-            period: $period,
-            metrics: ['screenPageViews'],
-            dimensions: ['pageReferrer'],
-            maxResults: $maxResults,
-            orderBy: [
+            $period,
+            ['screenPageViews'],
+            ['pageReferrer'],
+            $maxResults,
+            [
                 OrderBy::metric('screenPageViews', true),
             ],
-            offset: $offset,
+            $offset,
         );
     }
 
@@ -154,14 +159,14 @@ class Analytics
     public function fetchTopBrowsers(Period $period, int $maxResults = 10, int $offset = 0): Collection
     {
         return $this->get(
-            period: $period,
-            metrics: ['screenPageViews'],
-            dimensions: ['browser'],
-            maxResults: $maxResults,
-            orderBy: [
+            $period,
+            ['screenPageViews'],
+            ['browser'],
+            $maxResults,
+            [
                 OrderBy::metric('screenPageViews', true),
             ],
-            offset: $offset,
+            $offset,
         );
     }
 
@@ -174,14 +179,14 @@ class Analytics
     public function fetchTopCountries(Period $period, int $maxResults = 10, int $offset = 0): Collection
     {
         return $this->get(
-            period: $period,
-            metrics: ['screenPageViews'],
-            dimensions: ['country'],
-            maxResults: $maxResults,
-            orderBy: [
+            $period,
+            ['screenPageViews'],
+            ['country'],
+            $maxResults,
+            [
                 OrderBy::metric('screenPageViews', true),
             ],
-            offset: $offset,
+            $offset,
         );
     }
 
@@ -194,14 +199,14 @@ class Analytics
     public function fetchTopOperatingSystems(Period $period, int $maxResults = 10, int $offset = 0): Collection
     {
         return $this->get(
-            period: $period,
-            metrics: ['screenPageViews'],
-            dimensions: ['operatingSystem'],
-            maxResults: $maxResults,
-            orderBy: [
+            $period,
+            ['screenPageViews'],
+            ['operatingSystem'],
+            $maxResults,
+            [
                 OrderBy::metric('screenPageViews', true),
             ],
-            offset: $offset,
+            $offset,
         );
     }
 
@@ -213,7 +218,7 @@ class Analytics
         array $orderBy = [],
         int $offset = 0,
         FilterExpression $dimensionFilter = null,
-        bool $keepEmptyRows = false,
+        bool $keepEmptyRows = false
     ): Collection {
         return $this->client->get(
             $this->propertyId,

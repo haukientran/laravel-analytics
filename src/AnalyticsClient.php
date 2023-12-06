@@ -13,11 +13,15 @@ use Illuminate\Support\Collection;
 class AnalyticsClient
 {
     protected int $cacheLifeTimeInMinutes = 0;
+    protected BetaAnalyticsDataClient $service;
+    protected Repository $cache;
 
     public function __construct(
-        protected BetaAnalyticsDataClient $service,
-        protected Repository $cache,
+        BetaAnalyticsDataClient $service,
+        Repository $cache
     ) {
+        $this->service = $service;
+        $this->cache = $cache;
     }
 
     public function setCacheLifeTimeInMinutes(int $cacheLifeTimeInMinutes): self
@@ -36,7 +40,7 @@ class AnalyticsClient
         array $orderBy = [],
         int $offset = 0,
         FilterExpression $dimensionFilter = null,
-        bool $keepEmptyRows = false,
+        bool $keepEmptyRows = false
     ): Collection {
         $typeCaster = resolve(TypeCaster::class);
 
